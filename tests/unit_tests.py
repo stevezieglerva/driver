@@ -32,6 +32,27 @@ class TestMethods(unittest.TestCase):
 		self.assertEqual(result, "")
 
 
+	def test_convert_boto_resource_url_to_client_url__url_with_pluses__pluses_removed(self):
+		# Arrange
+		input = "https://s3.amazonaws.com/bucket/key+name.txt"
+# https://s3.amazonaws.com/code-index/prep-input%5CProjectX%5Cintegration_test_1.txt
+
+		# Act
+		result = convert_boto_resource_url_to_client_url(input)
+
+		# Assert
+		self.assertEqual(result, input.replace("+", " "))
+
+	def test_convert_boto_resource_url_to_client_url__url_with_pluses__pluses_removed(self):
+		# Arrange
+		input = "https://s3.amazonaws.com/bucket/%5Cfolder%5Ckey.txt"
+
+		# Act
+		result = convert_boto_resource_url_to_client_url(input)
+
+		# Assert
+		self.assertEqual(result, input.replace("%5C", "\\"))		
+
 if __name__ == '__main__':
 	unittest.main()		
 

@@ -4,7 +4,8 @@ import traceback
 import logging
 import structlog
 import boto3
-from urllib.parse import urlparse
+#from urllib.parse import urlparse
+import urllib 
 
 
 def get_files_from_s3_lambda_event(event):
@@ -51,11 +52,18 @@ def get_file_text_from_s3_file_url(s3_file_url):
 	return file_contents
 
 
+def convert_boto_resource_url_to_client_url(url):
+	"""Unescapes a URL from the boto resource format to the client format"""
+	unescaped_url = urllib.parse.unquote_plus(url)
+	return unescaped_url
+
+
 def download_s3_file_url(s3_file_url, file_location):
 	"""Saves a file from S3 to a local file location"""
 	s3_boto = boto3.client("s3")
-	bucket = get_bucket_name_from_url(s3_file_url)
-	key = get_key_from_url(s3_file_url)
+	s3_client_url = convert_boto_resource_url_to_client_url(s3_file_url)
+	bucket = get_bucket_name_from_url(s3_client_url)
+	key = get_key_from_url(s3_client_url)
 	s3_boto.download_file(bucket, key, file_location)
 
 
@@ -75,13 +83,13 @@ def get_bucket_name_from_arn(bucket_arn):
 
 def get_bucket_name_from_url(file_url):
 	"""Returns the bucket name from an S3 ojbect URL"""
-	parts = urlparse(file_url)
+	parts = urllib.parse.urlparse(file_url)
 	paths = parts.path.split("/")
 	return paths[1]
 
 def get_key_from_url(file_url):
 	"""Returns the key from an S3 ojbect URL"""	
-	parts = urlparse(file_url)
+	parts = urllib.parse.urlparse(file_url)
 	bucket_name = get_bucket_name_from_url(file_url)
 	key = parts.path.replace("/" + bucket_name + "/", "")
 	return key
