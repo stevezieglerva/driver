@@ -5,6 +5,7 @@ import json
 import re
 from S3TextFromLambdaEvent import *	
 import subprocess
+import cmd
 
 
 def read_stdin():
@@ -31,21 +32,14 @@ def do_s3_download(input):
 	key = get_key_from_url(input)
 	filename = os.environ["TEMP"] + "\\" + key
 	filename = filename.replace("/", "_")
-#	with open(filename, "w") as file:
-#		file.write(file_contents)
 
 	download_s3_file_url(input, filename)
 	print("\tDownloaded: " + filename)
 
 	subprocess.call("C:\\Program Files (x86)\\Mozilla Firefox\\firefox.exe \"" + filename + "\"")
 
-def main():
+def process_main():
 
-	patterns = [
-			{"command" : "quit" , "re" : "quit|q|e|exit"}, 
-			{"command" : "s3_download" , "re" : ".*s3.amazonaws.com.*"},
-			{"command" : "help" , "re" : "help|h"}
-		]
 
 	while True:
 		input_text = input("> ")
@@ -65,6 +59,53 @@ def main():
 
 		print("")
 
-if __name__ == '__main__':
-	main()	
 
+class MyCmd(cmd.Cmd):
+	def default(self, line):
+		patterns = [
+			{"command" : "quit" , "re" : "quit|q|e|exit"}, 
+			{"command" : "s3_download" , "re" : ".*s3.amazonaws.com.*"},
+			{"command" : "help" , "re" : "help|h"}
+			]
+
+
+		command = parse_command(patterns, line)
+		if command == "":
+			print("Can't find command matching that input.")
+		elif command == "quit":	
+			quit()
+		else:	
+			print("Command:" + command)
+			if command == "s3_download":
+				file_contents = do_s3_download(line)
+
+		print("")
+
+	def do_send(self, line):
+		print("\tSending to: " + line)
+
+
+	def do_q(self, line):
+		quit()
+
+	def complete_send(self, text, line, start_index, end_index):
+		addresses = [
+			'here@blubb.com',
+			'foo@bar.com',
+			'foo2@bar.com',
+			'foo3@bar.com',
+			'k19',
+		]
+		if text:
+			return [
+				address for address in addresses
+				if address.startswith(text)
+			]
+		else:
+			return addresses
+
+
+if __name__ == '__main__':
+	my_cmd = MyCmd(completekey='Tab')
+	my_cmd.prompt = "> "
+	my_cmd.cmdloop()
